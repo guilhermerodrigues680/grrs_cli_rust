@@ -1,23 +1,23 @@
-use std::str::FromStr;
+use clap::Parser;
 
-#[derive(Debug)]
+/// Search for a pattern in a file and display the lines that contain it.
+#[derive(Debug, Parser)]
 struct Cli {
+    /// The pattern to look for
     pattern: String,
+    /// The path to the file to read
     path: std::path::PathBuf,
 }
 
-fn get_args() -> Result<Cli, Box<dyn std::error::Error>> {
-    let pattern = std::env::args().nth(1).ok_or_else(|| "no pattern given")?;
-    let path = std::env::args().nth(2).ok_or_else(|| "no path given")?;
-    let path = std::path::PathBuf::from_str(&path)?;
-    Ok(Cli { pattern, path })
-}
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let cli = get_args()?;
+    let args = Cli::parse();
 
-    dbg!(cli);
-    println!("Hello, world!");
+    let content = std::fs::read_to_string(&args.path)?;
+    for line in content.lines() {
+        if line.contains(&args.pattern) {
+            println!("{line}");
+        }
+    }
 
     Ok(())
 }
