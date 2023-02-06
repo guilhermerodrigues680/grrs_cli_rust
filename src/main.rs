@@ -1,8 +1,8 @@
 use anyhow::Context;
+use anyhow::Ok;
 use clap::Parser;
 use log::info;
 use log::trace;
-use std::io::BufRead;
 use std::io::BufReader;
 
 // #[derive(Debug)]
@@ -46,13 +46,32 @@ fn main() -> anyhow::Result<()> {
 
     trace!("Criando buffer e lendo arquivo linha a linha");
     let reader = BufReader::new(file);
-    for line in reader.lines() {
-        let line = line?;
-        if line.contains(&args.pattern) {
-            println!("{line}");
-        }
-    }
+    find_matches(reader, &args.pattern, &mut std::io::stdout())?;
 
     info!("Programa encerrado com sucesso.");
     Ok(())
+}
+
+fn find_matches(
+    content: impl std::io::BufRead,
+    pattern: &str,
+    mut writer: impl std::io::Write,
+) -> anyhow::Result<()> {
+    for line in content.lines() {
+        let line = line?;
+        if line.contains(pattern) {
+            writeln!(writer, "{line}")?;
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
+fn find_a_match() {
+    let mut out = vec![];
+    let result = find_matches("lorem ipsum\ndolor sit amet".as_bytes(), "lorem", &mut out);
+
+    assert_eq!(result.is_err(), false);
+    assert_eq!(out, b"lorem ipsum\n");
 }
